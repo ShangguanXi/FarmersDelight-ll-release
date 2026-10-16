@@ -1,0 +1,249 @@
+{
+    "format_version": [
+        1,
+        1,
+        0
+    ],
+    "farmersdelight:oak_cabinet": { "sound": "wood" },
+    "farmersdelight:spruce_cabinet": { "sound": "wood" },
+    "farmersdelight:birch_cabinet": { "sound": "wood" },
+    "farmersdelight:jungle_cabinet": { "sound": "wood" },
+    "farmersdelight:acacia_cabinet": { "sound": "wood" },
+    "farmersdelight:dark_oak_cabinet": { "sound": "wood" },
+    "farmersdelight:mangrove_cabinet": { "sound": "wood" },
+    "farmersdelight:cherry_cabinet": { "sound": "cherry_wood" },
+    "farmersdelight:bamboo_cabinet": { "sound": "bamboo_wood" },
+    "farmersdelight:crimson_cabinet": { "sound": "nether_wood" },
+    "farmersdelight:warped_cabinet": { "sound": "nether_wood" },
+    "farmersdelight:canvas_rug": {
+        "sound": "grass"
+    },
+    "farmersdelight:cutting_board": {
+        "textures": "cutting_board",
+        "sound": "wood"
+    },
+    "farmersdelight:safety_net": {
+        "sound": "cloth"
+    },
+    "farmersdelight:rope": {
+        "sound": "cloth"
+    },
+    "farmersdelight:brown_mushroom_colony": {
+        "sound": "grass"
+    },
+    "farmersdelight:red_mushroom_colony": {
+        "sound": "grass"
+    },
+    "farmersdelight:wild_beetroots": {
+        "textures": "wild_beetroots",
+        "sound": "grass"
+    },
+    "farmersdelight:wild_cabbages": {
+        "textures": "wild_cabbages",
+        "sound": "grass"
+    },
+    "farmersdelight:wild_carrots": {
+        "textures": "wild_carrots",
+        "sound": "grass"
+    },
+    "farmersdelight:wild_onions": {
+        "textures": "wild_onions",
+        "sound": "grass"
+    },
+    "farmersdelight:wild_potatoes": {
+        "textures": "wild_potatoes",
+        "sound": "grass"
+    },
+    "farmersdelight:wild_rice": {
+        "textures": "wild_rice",
+        "sound": "grass"
+    },
+    "farmersdelight:wild_tomatoes": {
+        "textures": "wild_tomatoes",
+        "sound": "grass"
+    },
+    "farmersdelight:sandy_shrub": {
+        "textures": "sandy_shrub",
+        "sound": "grass"
+    },
+    "farmersdelight:half_tatami_mat": {
+        "sound": "cloth"
+    },
+    "farmersdelight:tatami": {
+        "sound": "cloth"
+    },
+    "farmersdelight:full_tatami_mat": {
+        "sound": "cloth"
+    },
+    "farmersdelight:rich_soil": {
+        "sound": "gravel"
+    },
+    "farmersdelight:rich_soil_farmland": {
+        "sound": "gravel"
+    },
+    "farmersdelight:organic_compost": {
+        "sound": "grass"
+    },
+    "farmersdelight:cooking_pot": {
+        "sound": "metal"
+    },
+    "farmersdelight:skillet_block": {
+        "sound": "metal"
+    },
+    "farmersdelight:beetroot_crate": {
+        "textures": {
+            "up": "beetroot_crate_top", "down": "crate_bottom",
+            "north": "beetroot_crate_side", "south": "beetroot_crate_side",
+            "west": "beetroot_crate_side", "east": "beetroot_crate_side"
+        },
+        "sound": "wood"
+    },
+    "farmersdelight:cabbage_crate": {
+        "textures": {
+            "up": "cabbage_crate_top", "down": "crate_bottom",
+            "north": "cabbage_crate_side", "south": "cabbage_crate_side",
+            "west": "cabbage_crate_side", "east": "cabbage_crate_side"
+        },
+        "sound": "wood"
+    },
+    "farmersdelight:carrot_crate": {
+        "textures": {
+            "up": "carrot_crate_top", "down": "crate_bottom",
+            "north": "carrot_crate_side", "south": "carrot_crate_side",
+            "west": "carrot_crate_side", "east": "carrot_crate_side"
+        },
+        "sound": "wood"
+    },
+    "farmersdelight:onion_crate": {
+        "textures": {
+            "up": "onion_crate_top", "down": "crate_bottom",
+            "north": "onion_crate_side", "south": "onion_crate_side",
+            "west": "onion_crate_side", "east": "onion_crate_side"
+        },
+        "sound": "wood"
+    },
+    "farmersdelight:potato_crate": {
+        "textures": {
+            "up": "potato_crate_top", "down": "crate_bottom",
+            "north": "potato_crate_side", "south": "potato_crate_side",
+            "west": "potato_crate_side", "east": "potato_crate_side"
+        },
+        "sound": "wood"
+    },
+    "farmersdelight:tomato_crate": {
+        "textures": {
+            "up": "tomato_crate_top", "down": "crate_bottom",
+            "north": "tomato_crate_side", "south": "tomato_crate_side",
+            "west": "tomato_crate_side", "east": "tomato_crate_side"
+        },
+        "sound": "wood"
+    },
+    "farmersdelight:rice_bag": {
+        "textures": {
+            "up": "rice_bag_top", "down": "rice_bag_bottom",
+            "north": "rice_bag_side_tied", "south": "rice_bag_side_tied",
+            "west": "rice_bag_side", "east": "rice_bag_side"
+        },
+        "sound": "cloth"
+    },
+    "farmersdelight:rice_bale": {
+        "textures": {
+            "up": "rice_bale_top", "down": "rice_bale_bottom",
+            "north": "rice_bale_side", "south": "rice_bale_side",
+            "west": "rice_bale_side", "east": "rice_bale_side"
+        },
+        "sound": "grass"
+    },
+    "farmersdelight:straw_bale": {
+        "textures": {
+            "up": "straw_bale_end", "down": "straw_bale_end",
+            "north": "straw_bale_side", "south": "straw_bale_side",
+            "west": "straw_bale_side", "east": "straw_bale_side"
+        },
+        "sound": "grass"
+    },
+    "farmersdelight:stove": {
+        "sound": "stone"
+    },
+    "farmersdelight:apple_pie": {
+        "sound": "cloth"
+    },
+    "farmersdelight:chocolate_pie": {
+        "sound": "cloth"
+    },
+    "farmersdelight:sweet_berry_cheesecake": {
+        "sound": "cloth"
+    },
+    "farmersdelight:pumpkin_pie": {
+        "sound": "cloth"
+    },
+    "farmersdelight:roast_chicken_block": {
+        "sound": "wood"
+    },
+    "farmersdelight:stuffed_pumpkin_block": {
+        "sound": "wood"
+    },
+    "farmersdelight:honey_glazed_ham_block": {
+        "sound": "wood"
+    },
+    "farmersdelight:shepherds_pie_block": {
+        "sound": "wood"
+    },
+    "farmersdelight:gleaming_salad_block": {
+        "sound": "wood"
+    },
+    "farmersdelight:rice_roll_medley_block": {
+        "sound": "wood"
+    },
+    "farmersdelight:canvas_sign": { "sound": "wood" },
+    "farmersdelight:wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:white_canvas_sign": { "sound": "wood" },
+    "farmersdelight:white_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:white_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:orange_canvas_sign": { "sound": "wood" },
+    "farmersdelight:orange_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:orange_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:magenta_canvas_sign": { "sound": "wood" },
+    "farmersdelight:magenta_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:magenta_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:light_blue_canvas_sign": { "sound": "wood" },
+    "farmersdelight:light_blue_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:light_blue_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:yellow_canvas_sign": { "sound": "wood" },
+    "farmersdelight:yellow_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:yellow_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:lime_canvas_sign": { "sound": "wood" },
+    "farmersdelight:lime_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:lime_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:pink_canvas_sign": { "sound": "wood" },
+    "farmersdelight:pink_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:pink_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:gray_canvas_sign": { "sound": "wood" },
+    "farmersdelight:gray_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:gray_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:light_gray_canvas_sign": { "sound": "wood" },
+    "farmersdelight:light_gray_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:light_gray_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:cyan_canvas_sign": { "sound": "wood" },
+    "farmersdelight:cyan_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:cyan_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:purple_canvas_sign": { "sound": "wood" },
+    "farmersdelight:purple_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:purple_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:blue_canvas_sign": { "sound": "wood" },
+    "farmersdelight:blue_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:blue_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:brown_canvas_sign": { "sound": "wood" },
+    "farmersdelight:brown_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:brown_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:green_canvas_sign": { "sound": "wood" },
+    "farmersdelight:green_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:green_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:red_canvas_sign": { "sound": "wood" },
+    "farmersdelight:red_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:red_hanging_canvas_sign": { "sound": "hanging_sign" },
+    "farmersdelight:black_canvas_sign": { "sound": "wood" },
+    "farmersdelight:black_wall_canvas_sign": { "sound": "wood" },
+    "farmersdelight:black_hanging_canvas_sign": { "sound": "hanging_sign" }
+}

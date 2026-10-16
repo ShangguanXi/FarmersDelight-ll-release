@@ -1,0 +1,1214 @@
+{
+  "namespace": "farmersdelight_cooking_pot",
+
+  //===========================================================================
+  // Farmer's Delight cooking pot screen.
+  //
+  // Vanilla 1.26.51 recipe-book visuals with independent fd_* bindings:
+  //   - common.button handles only preview/tab/filter events, never crafting
+  //   - 7 columns of 18px cells use vanilla red/gray recipe backgrounds
+  //   - common.container_item keeps all native slots untouched; recipe ghosts
+  //     (red cell + item) live in pot_ghost_grid on their own collection
+  //   - the 24px tab header is inside the root's 190px open-book layout
+  //   - closing the book collapses the layout to the centered 176x166 pot;
+  //     cover mode hides the entire pot so no real slots remain clickable
+  //===========================================================================
+
+  //---------------------------------------------------------------------------
+  // Shared small pieces
+  //---------------------------------------------------------------------------
+
+  "screen_title": {
+    "type": "label",
+    "offset": [ 28, 6 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "color": "$title_text_color",
+    "text": "$container_title",
+    "layer": 2
+  },
+
+  "inventory_title_label": {
+    "type": "label",
+    "offset": [ 8, 72 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "color": [ 0.25, 0.25, 0.25 ],
+    "text": "container.inventory",
+    "layer": 2
+  },
+
+  "cell_image_bg": {
+    "type": "image",
+    "size": [ "100%", "100%" ],
+    "texture": "textures/ui/recipe_book_item_bg",
+    "bindings": [
+      {
+        "binding_name": "#fd_recipe_background",
+        "binding_name_override": "#texture",
+        "binding_type": "collection",
+        "binding_collection_name": "fd_cooking_recipes"
+      }
+    ]
+  },
+
+  // Empty slot background: common.container_item's default cell_image_panel
+  // would paint its own slot frame over the JE atlas art (and a generic box
+  // on the meal slot). Pointing $background_images here keeps the native
+  // renderer/selection/button controls but draws no background.
+  "empty_background_panel": {
+    "type": "panel",
+    "size": [ "100%", "100%" ]
+  },
+
+  //---------------------------------------------------------------------------
+  // Pot panel artwork (JE CookingPotScreen.renderBg). Used as pot_stack's
+  // common_panel $dialog_background, which sets its layer to 1.
+  //---------------------------------------------------------------------------
+
+  "pot_background_image": {
+    "type": "image",
+    "size": [ 176, 166 ],
+    "offset": [ 0, 0 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "texture": "textures/gui/cooking_pot",
+    "uv": [ 0, 0 ],
+    "uv_size": [ 176, 166 ],
+    "layer": 0
+  },
+
+  // Heat icon: JE blits uv(176,0) 17x15 at (47,55) only while heated.
+  "heat_icon_image": {
+    "type": "image",
+    "size": [ 17, 15 ],
+    "offset": [ 47, 55 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "texture": "textures/gui/cooking_pot",
+    "uv": [ 176, 0 ],
+    "uv_size": [ 17, 15 ],
+    "layer": 2,
+    "bindings": [
+      {
+        "binding_name": "#fd_heated",
+        "binding_name_override": "#visible",
+        "binding_type": "global"
+      }
+    ]
+  },
+
+  // Progress arrow: JE blits uv(176,15) up to 25x17 at (89,25), filling
+  // left-to-right. #clip_ratio is the CLIPPED fraction (0 = full arrow,
+  // 1 = hidden), so #fd_cook_progress is (25 - drawn px) / 25; an idle pot
+  // still draws JE's 1px. clip_direction "left" makes the image appear from
+  // the left edge, so the fill runs left -> right like the furnace arrow.
+  "progress_arrow_image": {
+    "type": "image",
+    "size": [ 25, 17 ],
+    "offset": [ 89, 25 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "texture": "textures/gui/cooking_pot",
+    "uv": [ 176, 15 ],
+    "uv_size": [ 25, 17 ],
+    "layer": 2,
+    "clip_direction": "left",
+    "bindings": [
+      {
+        "binding_name": "#fd_cook_progress",
+        "binding_name_override": "#clip_ratio",
+        "binding_condition": "always"
+      }
+    ]
+  },
+
+  // Empty-bowl ghost in the container slot (JE EMPTY_CONTAINER_SLOT_BOWL),
+  // drawn at the 16px icon origin of container slot 7: (92,55).
+  "bowl_ghost_image": {
+    "type": "image",
+    "size": [ 16, 16 ],
+    "offset": [ 92, 55 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "texture": "textures/ui/farmersdelight/empty_container_slot_bowl",
+    "layer": 2,
+    "bindings": [
+      {
+        "binding_name": "#fd_empty_bowl_visible",
+        "binding_name_override": "#visible",
+        "binding_type": "global"
+      }
+    ]
+  },
+
+  //---------------------------------------------------------------------------
+  // Buttons. All inherit common.button: the template supplies
+  // button_mappings (menu_select/menu_ok -> $pressed_button_name), the
+  // default/hover/pressed state indirection, click sound and focus vars.
+  // Every derived button must therefore provide default/hover/pressed
+  // children (a bare button control would never fire its event).
+  //---------------------------------------------------------------------------
+
+  // Inert hover-only button (fires the consume-only button.fd_meal_display).
+  // Used for the heat indicator tooltip and the meal display tooltip. Silent
+  // via volume 0: an empty sound_name leaves the inherited sound_volume /
+  // sound_pitch unparsed ("Unknown property" content-log errors).
+  "inert_hover_button@common.button": {
+    "size": [ "100%", "100%" ],
+    "sound_volume": 0.0,
+    "$focus_enabled": false,
+    "$pressed_button_name|default": "button.fd_meal_display",
+    "$hover_text_binding|default": "#fd_heat_text",
+    "controls": [
+      {
+        "default": {
+          "type": "panel",
+          "size": [ "100%", "100%" ]
+        }
+      },
+      {
+        "hover": {
+          "type": "panel",
+          "size": [ "100%", "100%" ],
+          "controls": [
+            {
+              "inert_hover_text@common.hover_text": {
+                "layer": 29,
+                "bindings": [
+                  {
+                    "binding_name": "$hover_text_binding",
+                    "binding_name_override": "#hover_text",
+                    "binding_type": "global"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "pressed": {
+          "type": "panel",
+          "size": [ "100%", "100%" ]
+        }
+      }
+    ]
+  },
+
+  "heat_hover_button@farmersdelight_cooking_pot.inert_hover_button": {
+    "size": [ 17, 15 ],
+    "offset": [ 47, 55 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "layer": 6,
+    "$hover_text_binding": "#fd_heat_text"
+  },
+
+  // JE-style recipe book toggle (JE: 20x18 at gui-relative (5,34)).
+  "book_toggle_button@common.button": {
+    "size": [ 20, 18 ],
+    "$pressed_button_name": "button.fd_toggle_book",
+    "controls": [
+      {
+        "default": {
+          "type": "image",
+          "size": [ "100%", "100%" ],
+          "texture": "textures/ui/farmersdelight/recipe_book_button"
+        }
+      },
+      {
+        "hover": {
+          "type": "image",
+          "size": [ "100%", "100%" ],
+          "texture": "textures/ui/farmersdelight/recipe_book_button",
+          "color": [ 1.0, 1.0, 0.78 ]
+        }
+      },
+      {
+        "pressed": {
+          "type": "image",
+          "size": [ "100%", "100%" ],
+          "texture": "textures/ui/farmersdelight/recipe_book_button",
+          "color": [ 0.9, 0.9, 0.7 ]
+        }
+      }
+    ]
+  },
+
+  // Native tab/switch artwork, without the crafting controller's toggles.
+  // "modifications" is not a property of a control instance (content log:
+  // Unknown property [modifications]), so the hover tooltip is a built-in
+  // child gated by $tab_state_tooltip, which the hover state turns on.
+  "tab_state": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "$tab_state_tooltip|default": false,
+    "controls": [
+      {
+        "tooltip@common.hover_text": {
+          "ignored": "(not $tab_state_tooltip)",
+          "layer": 30,
+          "bindings": [
+            { "binding_name": "$tab_tooltip_binding", "binding_name_override": "#hover_text", "binding_type": "global" }
+          ]
+        }
+      },
+      {
+        "back": {
+          "type": "image",
+          "size": [ "100%", "100%" ],
+          "texture": "$tab_back_texture",
+          "layer": 1,
+          "bindings": [
+            { "binding_name": "$tab_highlight_binding", "binding_name_override": "#fd_selected", "binding_type": "global" },
+            { "binding_type": "view", "source_property_name": "(not #fd_selected)", "target_property_name": "#visible" }
+          ]
+        }
+      },
+      {
+        "front": {
+          "type": "image",
+          "size": [ "100%", "100%" ],
+          "texture": "$tab_front_texture",
+          "layer": 2,
+          "bindings": [
+            { "binding_name": "$tab_highlight_binding", "binding_name_override": "#visible", "binding_type": "global" }
+          ]
+        }
+      }
+    ]
+  },
+
+  // Each derived tab sets $pressed_button_name itself. With the old alias to
+  // a variable that had a |default in this same template ("$tab_event"), no
+  // tab reacted in game; vanilla never overrides such an alias per instance.
+  "tab_button_template@common.button": {
+    "size": [ 25, 27 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "$pressed_button_name|default": "button.fd_tab_all",
+    "$tab_highlight_binding|default": "#fd_tab_all",
+    "$tab_tooltip_binding|default": "#fd_tab_all_tooltip",
+    "$tab_icon|default": "textures/items/book_farmersdelight",
+    "$tab_back|default": "textures/ui/TabTopBack",
+    "$tab_back_hover|default": "textures/ui/TabTopBackHover",
+    "$tab_front|default": "textures/ui/TabTopFront",
+    "$tab_front_hover|default": "textures/ui/TabTopFrontHover",
+    "controls": [
+      {
+        "default@farmersdelight_cooking_pot.tab_state": {
+          "$tab_back_texture": "$tab_back",
+          "$tab_front_texture": "$tab_front"
+        }
+      },
+      {
+        "hover@farmersdelight_cooking_pot.tab_state": {
+          "$tab_back_texture": "$tab_back_hover",
+          "$tab_front_texture": "$tab_front_hover",
+          "$tab_state_tooltip": true
+        }
+      },
+      {
+        "pressed@farmersdelight_cooking_pot.tab_state": {
+          "$tab_back_texture": "$tab_back_hover",
+          "$tab_front_texture": "$tab_front_hover"
+        }
+      },
+      {
+        "icon": {
+          "type": "image",
+          "size": [ 16, 16 ],
+          "offset": [ 0, -1 ],
+          "layer": 4,
+          "texture": "$tab_icon"
+        }
+      }
+    ]
+  },
+
+  "tab_all_button@farmersdelight_cooking_pot.tab_button_template": {
+    "offset": [ 0, 0 ],
+    "$tab_back": "textures/ui/TabTopBackLeftMost",
+    "$tab_back_hover": "textures/ui/TabTopBackLeftMostHover",
+    "$tab_front": "textures/ui/TabTopFrontLeftMost",
+    "$tab_front_hover": "textures/ui/TabTopFrontLeftMostHover"
+  },
+
+  "tab_meals_button@farmersdelight_cooking_pot.tab_button_template": {
+    "offset": [ 25, 0 ],
+    "$pressed_button_name": "button.fd_tab_meals",
+    "$tab_highlight_binding": "#fd_tab_meals",
+    "$tab_tooltip_binding": "#fd_tab_meals_tooltip",
+    "$tab_icon": "textures/items/chicken_soup"
+  },
+
+  "tab_drinks_button@farmersdelight_cooking_pot.tab_button_template": {
+    "offset": [ 50, 0 ],
+    "$pressed_button_name": "button.fd_tab_drinks",
+    "$tab_highlight_binding": "#fd_tab_drinks",
+    "$tab_tooltip_binding": "#fd_tab_drinks_tooltip",
+    "$tab_icon": "textures/items/apple_cider"
+  },
+
+  "tab_misc_button@farmersdelight_cooking_pot.tab_button_template": {
+    "offset": [ 75, 0 ],
+    "$pressed_button_name": "button.fd_tab_misc",
+    "$tab_highlight_binding": "#fd_tab_misc",
+    "$tab_tooltip_binding": "#fd_tab_misc_tooltip",
+    "$tab_icon": "textures/items/sugar"
+  },
+
+  "tab_search_button@farmersdelight_cooking_pot.tab_button_template": {
+    "anchor_from": "top_right",
+    "anchor_to": "top_right",
+    "$pressed_button_name": "button.fd_tab_search",
+    "$tab_highlight_binding": "#fd_tab_search",
+    "$tab_tooltip_binding": "#fd_tab_search_tooltip",
+    "$tab_icon": "textures/ui/magnifyingGlass",
+    "$tab_back": "textures/ui/TabTopBackRightMost",
+    "$tab_back_hover": "textures/ui/TabTopBackRightMostHover",
+    "$tab_front": "textures/ui/TabTopFrontRightMost",
+    "$tab_front_hover": "textures/ui/TabTopFrontRightMostHover"
+  },
+
+  // Same gated-tooltip pattern as tab_state.
+  "filter_state": {
+    "type": "panel",
+    "size": [ "100%", "100%" ],
+    "$filter_state_tooltip|default": false,
+    "controls": [
+      {
+        "tooltip@common.hover_text": {
+          "ignored": "(not $filter_state_tooltip)",
+          "layer": 30,
+          "bindings": [
+            { "binding_name": "#fd_filter_tooltip", "binding_name_override": "#hover_text", "binding_type": "global" }
+          ]
+        }
+      },
+      {
+        "all": {
+          "type": "image",
+          "size": [ "100%", "100%" ],
+          "texture": "$filter_off_texture",
+          "bindings": [
+            { "binding_name": "#fd_materials_only", "binding_type": "global" },
+            { "binding_type": "view", "source_property_name": "(not #fd_materials_only)", "target_property_name": "#visible" }
+          ]
+        }
+      },
+      {
+        "craftable": {
+          "type": "image",
+          "size": [ "100%", "100%" ],
+          "texture": "$filter_on_texture",
+          "bindings": [
+            { "binding_name": "#fd_materials_only", "binding_name_override": "#visible", "binding_type": "global" }
+          ]
+        }
+      }
+    ]
+  },
+
+  "materials_toggle_button@common.button": {
+    "size": [ 29, 17 ],
+    "offset": [ -6, 3 ],
+    "anchor_from": "top_right",
+    "anchor_to": "top_right",
+    "layer": 4,
+    "$pressed_button_name": "button.fd_materials_only",
+    "controls": [
+      {
+        "default@farmersdelight_cooking_pot.filter_state": {
+          "$filter_off_texture": "textures/ui/craft_toggle_off",
+          "$filter_on_texture": "textures/ui/craft_toggle_on"
+        }
+      },
+      {
+        "hover@farmersdelight_cooking_pot.filter_state": {
+          "$filter_off_texture": "textures/ui/craft_toggle_off_hover",
+          "$filter_on_texture": "textures/ui/craft_toggle_on_hover",
+          "$filter_state_tooltip": true
+        }
+      },
+      {
+        "pressed@farmersdelight_cooking_pot.filter_state": {
+          "$filter_off_texture": "textures/ui/craft_toggle_off_hover",
+          "$filter_on_texture": "textures/ui/craft_toggle_on_hover"
+        }
+      }
+    ]
+  },
+
+  //---------------------------------------------------------------------------
+  // Real pot slots (collection "container_items", indices 0-8)
+  //---------------------------------------------------------------------------
+
+  "container_slot_plain@common.container_item": {
+    "$item_collection_name": "container_items",
+    "$background_images": "farmersdelight_cooking_pot.empty_background_panel"
+  },
+
+  // Meal display slot 6 keeps its inert button. Slot 8 is the real output.
+  "container_slot_meal@farmersdelight_cooking_pot.container_slot_plain": {
+    "$button_ref": "farmersdelight_cooking_pot.meal_slot_button"
+  },
+
+  "meal_slot_button@farmersdelight_cooking_pot.inert_hover_button": {
+    "$hover_text_binding": "#fd_meal_tooltip"
+  },
+
+  //---------------------------------------------------------------------------
+  // Selected-recipe ghosts, drawn like the vanilla recipe book: a red cell
+  // (textures/ui/cell_image_red) under the item at full opacity, only where
+  // the real slot is empty. They sit in their own grid on the
+  // fd_cooking_preview collection, laid out exactly like pot_grid, so every
+  // collection binding reads its own grid's collection and index. Preview
+  // indices follow the pot slots: 0-5 ingredients, 6 meal, 7 container.
+  //---------------------------------------------------------------------------
+
+  "ghost_item@common.item_renderer": {
+    "size": [ 16, 16 ],
+    "offset": [ 1, 1 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "layer": 2,
+    "bindings": [
+      {
+        "binding_name": "#fd_preview_item",
+        "binding_name_override": "#item_renderer_data",
+        "binding_type": "collection",
+        "binding_collection_name": "fd_cooking_preview"
+      }
+    ]
+  },
+
+  // The red cell repaints the JE slot frame (same 1px dark/white bevel).
+  "ghost_cell": {
+    "type": "panel",
+    "size": [ 18, 18 ],
+    "bindings": [
+      {
+        "binding_type": "collection_details",
+        "binding_collection_name": "fd_cooking_preview"
+      },
+      {
+        "binding_name": "#fd_recipe_ghost_visible",
+        "binding_name_override": "#visible",
+        "binding_type": "collection",
+        "binding_collection_name": "fd_cooking_preview"
+      }
+    ],
+    "controls": [
+      {
+        "red": {
+          "type": "image",
+          "size": [ 18, 18 ],
+          "texture": "textures/ui/cell_image_red",
+          "layer": 1
+        }
+      },
+      { "item@farmersdelight_cooking_pot.ghost_item": {} }
+    ]
+  },
+
+  // The meal well has no slot frame: JE fills only the 16px icon area red
+  // (renderResult=false) and draws the result's count. stack_count_label's
+  // "ignored" reads $stack_count_required from its ANCESTORS (vanilla sets it
+  // on container_item), so it is declared here, not on the label.
+  "ghost_cell_meal@farmersdelight_cooking_pot.ghost_cell": {
+    "$stack_count_required": true,
+    "controls": [
+      {
+        "red": {
+          "type": "image",
+          "size": [ 16, 16 ],
+          "offset": [ 1, 1 ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "texture": "textures/ui/White",
+          "color": [ 0.851, 0.302, 0.302 ],
+          "layer": 1
+        }
+      },
+      { "item@farmersdelight_cooking_pot.ghost_item": {} },
+      {
+        "count@common.stack_count_label": {
+          "layer": 4,
+          "$item_collection_name": "fd_cooking_preview",
+          "$stack_count_binding_name": "#fd_preview_count"
+        }
+      }
+    ]
+  },
+
+  "grid_cell": {
+    "type": "panel",
+    "size": [ 18, 18 ]
+  },
+
+  // 9 dispenser container slots at JE coordinates. JE Slot(x,y) is the 16px
+  // ICON origin; the atlas cell border sits at (x-1,y-1). common.container_item
+  // is an 18px cell whose renderer auto-centers (+1), so the grid anchors at
+  // the CELL origin (29,16) and the icons land exactly on the JE positions.
+  // One 3x3 grid of 18px cells; collection index = grid col + row * 3 (proven
+  // index semantics in this runtime). Row 2 cells carry explicit child offsets
+  // to land on the JE meal/container/output ICON positions:
+  //   idx6 (0,2) cell lattice(29,52) + (94,-27) -> icon (124,26)
+  //   idx7 (1,2) cell lattice(47,52) + (44,2)   -> icon (92,55)
+  //   idx8 (2,2) cell lattice(65,52) + (58,2)   -> icon (124,55)
+  "pot_grid": {
+    "type": "grid",
+    "size": [ 54, 54 ],
+    "offset": [ 29, 16 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "grid_dimensions": [ 3, 3 ],
+    "collection_name": "container_items",
+    "controls": [
+      {
+        "slot0@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 0, 0 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": {} }
+          ]
+        }
+      },
+      {
+        "slot1@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 1, 0 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": {} }
+          ]
+        }
+      },
+      {
+        "slot2@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 2, 0 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": {} }
+          ]
+        }
+      },
+      {
+        "slot3@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 0, 1 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": {} }
+          ]
+        }
+      },
+      {
+        "slot4@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 1, 1 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": {} }
+          ]
+        }
+      },
+      {
+        "slot5@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 2, 1 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": {} }
+          ]
+        }
+      },
+      {
+        "slot6@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 0, 2 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_meal": { "offset": [ 94, -27 ] } }
+          ]
+        }
+      },
+      {
+        "slot7@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 1, 2 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": { "offset": [ 44, 2 ] } }
+          ]
+        }
+      },
+      {
+        "slot8@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 2, 2 ],
+          "controls": [
+            { "item@farmersdelight_cooking_pot.container_slot_plain": { "offset": [ 58, 2 ] } }
+          ]
+        }
+      }
+    ]
+  },
+
+  // Ghost layer for pot_grid: same origin, lattice and row-2 offsets, on the
+  // fd_cooking_preview collection (index = col + row * 3; no ghost on idx 8).
+  // Panels/images only, so it never takes input; drawn under pot_grid's own
+  // hover highlight (container_item button layer 5 > ghost layers 1-4).
+  "pot_ghost_grid": {
+    "type": "grid",
+    "size": [ 54, 54 ],
+    "offset": [ 29, 16 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "grid_dimensions": [ 3, 3 ],
+    "collection_name": "fd_cooking_preview",
+    "controls": [
+      {
+        "p0@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 0, 0 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell": {} }
+          ]
+        }
+      },
+      {
+        "p1@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 1, 0 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell": {} }
+          ]
+        }
+      },
+      {
+        "p2@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 2, 0 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell": {} }
+          ]
+        }
+      },
+      {
+        "p3@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 0, 1 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell": {} }
+          ]
+        }
+      },
+      {
+        "p4@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 1, 1 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell": {} }
+          ]
+        }
+      },
+      {
+        "p5@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 2, 1 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell": {} }
+          ]
+        }
+      },
+      {
+        "p6@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 0, 2 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell_meal": { "offset": [ 94, -27 ] } }
+          ]
+        }
+      },
+      {
+        "p7@farmersdelight_cooking_pot.grid_cell": {
+          "grid_position": [ 1, 2 ],
+          "controls": [
+            { "ghost@farmersdelight_cooking_pot.ghost_cell": { "offset": [ 44, 2 ] } }
+          ]
+        }
+      }
+    ]
+  },
+
+  // Player inventory and hotbar at exact JE coordinates. Cell origins are the
+  // JE icon positions minus 1 (renderer centers +1): inventory cells at
+  // (7,83) -> icon rows 84/102/120, hotbar cells at (7,141) -> icon row 142.
+  // Vanilla bottom-half templates sit 2px lower, so these are own grids using
+  // the standard common.container_item template like redstone_input_grid, with
+  // the JE atlas already painting the slot frames ($background_images empty).
+  "player_inventory_grid": {
+    "type": "grid",
+    "size": [ 162, 54 ],
+    "offset": [ 7, 83 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "grid_dimensions": [ 9, 3 ],
+    "collection_name": "inventory_items",
+    "grid_item_template": "common.container_item",
+    "$item_collection_name": "inventory_items",
+    "$background_images": "farmersdelight_cooking_pot.empty_background_panel"
+  },
+
+  "player_hotbar_grid": {
+    "type": "grid",
+    "size": [ 162, 18 ],
+    "offset": [ 7, 141 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "grid_dimensions": [ 9, 1 ],
+    "collection_name": "hotbar_items",
+    "grid_item_template": "common.container_item",
+    "$item_collection_name": "hotbar_items",
+    "$background_images": "farmersdelight_cooking_pot.empty_background_panel"
+  },
+
+  //---------------------------------------------------------------------------
+  // Recipe book
+  //---------------------------------------------------------------------------
+
+  "book_title_label": {
+    "type": "label",
+    "offset": [ 6, 7 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "size": [ "100%-45px", 10 ],
+    "layer": 2,
+    "text": "#fd_book_tab_title",
+    "color": [ 0.2, 0.2, 0.2 ],
+    "bindings": [
+      { "binding_name": "#fd_book_tab_title", "binding_type": "global" },
+      { "binding_name": "#fd_category_visible", "binding_name_override": "#visible", "binding_type": "global" }
+    ]
+  },
+
+  // Native search box. $text_box_name is the engine-side text box name the
+  // native controller binds text-changed events to; the content binding only
+  // mirrors externally-set state (edit boxes do not write back to bindings).
+  // $text_edit_box_binding_condition "once" (template default "visible") limits
+  // the #fd_search_text -> #item_name push to initialization so the mirrored
+  // text never re-echoes over what the player typed (ui_common L1400/1424).
+  "book_search_box@common.text_edit_box": {
+    "offset": [ 6, 3 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "size": [ "100%-45px", 18 ],
+    "layer": 3,
+    "$focus_id": "fd_recipe_search",
+    "max_length": 64,
+    "$text_box_name": "fd_recipe_search",
+    "$text_edit_box_content_binding_name": "#fd_search_text",
+    "$text_edit_box_binding_condition": "once",
+    "$place_holder_text": "fd.recipe_book.search_hint",
+    "$text_box_enabled_binding_name": "#fd_search_mode",
+    "$text_edit_visible_binding_name": "#fd_search_mode",
+    "$text_edit_visible_binding_type": "global"
+  },
+
+  // Vanilla recipe book pane (common.container_scroll_panel look): dark
+  // recipe_book_pane_bg behind the cells with a 1px border, dark scrollbar.
+  // 134 = 2px pad + 4px bar + 0px right pad + 128 pane; pane - 2px border =
+  // 126px viewport = 7 x 18px cells, in touch mode too. Layout updates also
+  // refresh the scroll view's content/viewport range.
+  "recipe_scroll_panel@common.scrolling_panel": {
+    "offset": [ 6, 22 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "size": [ 134, 138 ],
+    "layer": 3,
+    "$scroll_view_name": "fd_recipe_scroll_view",
+    "$scrolling_pane_size": [ "100%", "100%" ],
+    "$scrolling_content": "farmersdelight_cooking_pot.recipe_scroll_content",
+    "$scroll_size": [ 4, "100%" ],
+    "$scroll_size_touch": [ 4, "100%" ],
+    "$scroll_bar_right_padding_size": [ 0, 0 ],
+    "$scroll_view_port_size": [ "100% - 2px", "100% - 2px" ],
+    "$scroll_view_port_offset": [ 1, 1 ],
+    "$view_port_size_touch": [ "fill", "100%" ],
+    "$scroll_view_port_size_touch": [ "100% - 2px", "100% - 2px" ],
+    "$scroll_view_port_offset_touch": [ 1, 1 ],
+    "$scroll_bar_contained_touch": false,
+    "$scroll_bar_left_padding_size_touch": [ 2, 0 ],
+    "$scroll_bar_right_padding_size_touch": [ 0, 0 ],
+    "$scroll_box_visible_touch": true,
+    "$scrollbar_always_visible": true,
+    "$allow_scroll_even_when_content_fits": false,
+    "$allow_scrolling_even_when_content_fits": false,
+    "$show_background": true,
+    "$scroll_background_image_control": "common.container_scroll_background_image",
+    "$scroll_track_image_control": "common.container_scrollbar_track",
+    "$scroll_box_mouse_image_control": "common.container_scroll_box_image",
+    "$scroll_box_touch_image_control": "common.container_touch_scrollbar_box_image"
+  },
+
+  "recipe_scroll_content": {
+    "type": "panel",
+    "size": [ "100%", "100%c" ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "controls": [
+      {
+        "recipe_grid": {
+          "type": "grid",
+          "size": [ "100%", "100%c" ],
+          "grid_item_template": "farmersdelight_cooking_pot.recipe_cell",
+          "grid_dimension_binding": "#fd_book_grid_size",
+          "collection_name": "fd_cooking_recipes",
+          "bindings": [
+            {
+              "binding_name": "#fd_book_grid_size",
+              "binding_type": "global"
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  // One recipe cell in the book grid. The button carries the explicit
+  // #fd_recipe_index contract: property_bag default -1, overwritten per index
+  // by the collection binding; native reads bag["#fd_recipe_index"] on click.
+  "recipe_cell": {
+    "type": "panel",
+    "size": [ 18, 18 ],
+    "$stack_count_required": true,
+    "bindings": [
+      {
+        "binding_type": "collection_details",
+        "binding_collection_name": "fd_cooking_recipes",
+        "binding_condition": "once"
+      },
+      {
+        "binding_name": "#fd_recipe_visible",
+        "binding_name_override": "#visible",
+        "binding_type": "collection",
+        "binding_collection_name": "fd_cooking_recipes"
+      }
+    ],
+    "controls": [
+      {
+        "recipe_button@common.button": {
+          "size": [ "100%", "100%" ],
+          "$pressed_button_name": "button.fd_recipe_select",
+          "property_bag": {
+            "#fd_recipe_index": -1,
+            "#fd_cover_mode": "$fd_book_own_toggle"
+          },
+          "bindings": [
+            {
+              "binding_name": "#fd_recipe_index",
+              "binding_name_override": "#fd_recipe_index",
+              "binding_type": "collection",
+              "binding_collection_name": "fd_cooking_recipes"
+            }
+          ],
+          "controls": [
+            {
+              "default@farmersdelight_cooking_pot.cell_image_bg": {}
+            },
+            {
+              "hover@farmersdelight_cooking_pot.cell_image_bg": {
+                "controls": [
+                  { "border@common.white_border_slot": { "layer": 3 } },
+                  {
+                    "recipe_hover_text@common.hover_text": {
+                      "layer": 30,
+                      "bindings": [
+                        {
+                          "binding_name": "#fd_recipe_tooltip",
+                          "binding_name_override": "#hover_text",
+                          "binding_type": "collection",
+                          "binding_collection_name": "fd_cooking_recipes"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "pressed@farmersdelight_cooking_pot.cell_image_bg": {
+                "controls": [
+                  { "border@common.white_border_slot": { "layer": 3 } }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "recipe_item@common.item_renderer": {
+          "size": [ 16, 16 ],
+          "offset": [ 1, 1 ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "layer": 2,
+          "bindings": [
+            {
+              "binding_name": "#fd_recipe_item",
+              "binding_name_override": "#item_renderer_data",
+              "binding_type": "collection",
+              "binding_collection_name": "fd_cooking_recipes"
+            }
+          ]
+        }
+      },
+      {
+        "recipe_count@common.stack_count_label": {
+          "layer": 4,
+          "$item_collection_name": "fd_cooking_recipes",
+          "$stack_count_binding_name": "#fd_recipe_count"
+        }
+      },
+      {
+        "recipe_selected@common.white_border_slot": {
+          "layer": 3,
+          "bindings": [
+            {
+              "binding_name": "#fd_recipe_selected",
+              "binding_name_override": "#visible",
+              "binding_type": "collection",
+              "binding_collection_name": "fd_cooking_recipes"
+            }
+          ]
+        }
+      }
+    ]
+  },
+
+  //---------------------------------------------------------------------------
+  // The tab header occupies the first 24px; the 166px book body starts below.
+  // Wide: [book 146][fold 4][pot 176]. Cover: book plus a return button, no pot.
+  //---------------------------------------------------------------------------
+
+  "book_panel": {
+    "type": "panel",
+    "size": "$fd_book_size",
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "layer": 8,
+    "bindings": [
+      {
+        "binding_name": "#fd_book_visible",
+        "binding_name_override": "#visible",
+        "binding_type": "global"
+      }
+    ],
+    "controls": [
+      {
+        // TabTop* art is 9-sliced with a 4px bottom slice: TabTopBack leaves it
+        // transparent, TabTopFront fills it to merge into the panel. Like
+        // vanilla the 27px tabs overlap the body by 4px (body at 24 = 1 + 23),
+        // so a back tab ends right on the body border, and they draw above the
+        // body (layer 7 > 5) so the selected tab covers that border.
+        "tabs": {
+          "type": "panel",
+          "size": [ 146, 27 ],
+          "offset": [ 0, 1 ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "layer": 7,
+          "controls": [
+            { "tab_all@farmersdelight_cooking_pot.tab_all_button": {} },
+            { "tab_meals@farmersdelight_cooking_pot.tab_meals_button": {} },
+            { "tab_drinks@farmersdelight_cooking_pot.tab_drinks_button": {} },
+            { "tab_misc@farmersdelight_cooking_pot.tab_misc_button": {} },
+            { "tab_search@farmersdelight_cooking_pot.tab_search_button": {} }
+          ]
+        }
+      },
+      {
+        "body": {
+          "type": "panel",
+          "size": [ 146, 166 ],
+          "offset": [ 0, 24 ],
+          "anchor_from": "top_left",
+          "anchor_to": "top_left",
+          "layer": 5,
+          "controls": [
+            { "book_bg@common.common_panel": { "$show_close_button": false } },
+            { "book_title@farmersdelight_cooking_pot.book_title_label": {} },
+            { "book_search@farmersdelight_cooking_pot.book_search_box": {} },
+            { "materials_toggle@farmersdelight_cooking_pot.materials_toggle_button": {} },
+            { "recipe_scroll@farmersdelight_cooking_pot.recipe_scroll_panel": {} }
+          ]
+        }
+      },
+      {
+        // Outside the 146px book body, inside the 176px cover-mode root.
+        "book_back@common.back_button": {
+          "anchor_from": "top_right",
+          "anchor_to": "top_right",
+          "offset": [ -3, 3 ],
+          "size": [ 24, 20 ],
+          "layer": 10,
+          "ignored": "(not $fd_book_own_toggle)",
+          "$back_button_text": "",
+          "$button_tts_header": "fd.recipe_book.back",
+          "$back_button_pressed_button_name": "button.fd_toggle_book",
+          "bindings": []
+        }
+      }
+    ]
+  },
+
+  //---------------------------------------------------------------------------
+  // Pot stack: everything that belongs to the pot GUI. In cover mode its
+  // visibility binding becomes "(not #fd_book_visible)" so the covered slots
+  // cannot be interacted with while the book is open; in wide mode it is
+  // driven by #fd_wide_layout (true whenever this branch is active).
+  //---------------------------------------------------------------------------
+
+  "pot_stack": {
+    "type": "panel",
+    "size": [ 176, 166 ],
+    "anchor_from": "top_left",
+    "anchor_to": "top_left",
+    "bindings": [
+      {
+        "binding_name": "$fd_pot_visible_expr",
+        "binding_name_override": "#visible",
+        "binding_type": "global"
+      }
+    ],
+    "controls": [
+      // The JE art IS the panel background: common_panel draws it at layer 1,
+      // under the vanilla close button (layer 2) and the title (layer 2).
+      // Drawing it inside fd_screen_content (layer 5) covered both.
+      {
+        "common_panel@common.common_panel": {
+          "$dialog_background": "farmersdelight_cooking_pot.pot_background_image"
+        }
+      },
+      {
+        "fd_screen_content": {
+          "type": "panel",
+          "layer": 5,
+          "controls": [
+            { "inventory_label@farmersdelight_cooking_pot.inventory_title_label": {} },
+            { "pot_ghosts@farmersdelight_cooking_pot.pot_ghost_grid": {} },
+            { "pot_grid@farmersdelight_cooking_pot.pot_grid": {} },
+            { "player_inventory@farmersdelight_cooking_pot.player_inventory_grid": {} },
+            { "player_hotbar@farmersdelight_cooking_pot.player_hotbar_grid": {} },
+            { "heat_icon@farmersdelight_cooking_pot.heat_icon_image": {} },
+            { "progress_arrow@farmersdelight_cooking_pot.progress_arrow_image": {} },
+            { "bowl_ghost@farmersdelight_cooking_pot.bowl_ghost_image": {} },
+            { "heat_hover@farmersdelight_cooking_pot.heat_hover_button": {} },
+            {
+              "pot_book_toggle@farmersdelight_cooking_pot.book_toggle_button": {
+                "offset": [ 5, 34 ],
+                "anchor_from": "top_left",
+                "anchor_to": "top_left",
+                "layer": 6
+              }
+            }
+          ]
+        }
+      },
+      { "screen_title@farmersdelight_cooking_pot.screen_title": {} }
+    ]
+  },
+
+  //---------------------------------------------------------------------------
+  // Screens
+  //---------------------------------------------------------------------------
+
+  "desktop_panel": {
+    "type": "panel",
+    "$fd_wide_layout|default": true,
+    "$fd_root_size|default": [ 326, 166 ],
+    "$fd_book_size|default": [ 146, 190 ],
+    "$fd_gap_size|default": [ 4, 190 ],
+    "$fd_pot_visible_expr|default": "#fd_wide_layout",
+    "$fd_book_own_toggle|default": false,
+    "variables": [
+      {
+        "requires": "(not $fd_wide_layout)",
+        "$fd_root_size": [ 176, 166 ],
+        "$fd_book_size": [ 176, 190 ],
+        "$fd_gap_size": [ 0, 0 ],
+        "$fd_pot_visible_expr": "(not #fd_book_visible)",
+        "$fd_book_own_toggle": true
+      }
+    ],
+    "controls": [
+      { "container_gamepad_helpers@common.container_gamepad_helpers": {} },
+      { "selected_item_details_factory@common.selected_item_details_factory": {} },
+      { "item_lock_notification_factory@common.item_lock_notification_factory": {} },
+      {
+        "root_panel@common.root_panel": {
+          "layer": 1,
+          "size": "$fd_root_size",
+          "use_anchored_offset": true,
+          "bindings": [
+            { "binding_name": "#fd_layout_height", "binding_name_override": "#size_binding_y", "binding_type": "global" }
+          ],
+          "controls": [
+            {
+              // Horizontal stack: invisible children collapse, so the
+              // book+gap+pot group centers as one unit in wide mode and a
+              // lone visible child centers exactly like the vanilla panel.
+              // Height must be %cm (tallest visible child): %c is the TOTAL
+              // of the children, i.e. 3 x 190 = 570 with the book open,
+              // which pushed the whole layout ~190px off the top edge.
+              "fd_layout@common.horizontal_stack_panel": {
+                "size": [ "100%c", "100%cm" ],
+                "anchor_from": "center",
+                "anchor_to": "center",
+                "controls": [
+                  { "book_panel@farmersdelight_cooking_pot.book_panel": {} },
+                  {
+                    "fd_gap": {
+                      "type": "panel",
+                      "size": "$fd_gap_size",
+                      "ignored": "(not $fd_wide_layout)",
+                      "bindings": [
+                        {
+                          "binding_name": "#fd_book_visible",
+                          "binding_name_override": "#visible",
+                          "binding_type": "global"
+                        }
+                      ],
+                      "controls": [
+                        {
+                          "fold": {
+                            "type": "image",
+                            "texture": "textures/ui/recipe_back_panel",
+                            "size": [ 12, 160 ],
+                            "offset": [ 0, 27 ],
+                            "anchor_from": "top_middle",
+                            "anchor_to": "top_middle"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "pot_column@common.vertical_stack_panel": {
+                      "size": [ 176, "100%c" ],
+                      "bindings": [
+                        { "binding_name": "$fd_pot_visible_expr", "binding_name_override": "#visible", "binding_type": "global" }
+                      ],
+                      "controls": [
+                        {
+                          "tab_space": {
+                            "type": "panel",
+                            "size": [ 176, 24 ],
+                            "ignored": "(not $fd_wide_layout)",
+                            "bindings": [
+                              { "binding_name": "#fd_pot_top_space", "binding_name_override": "#visible", "binding_type": "global" }
+                            ]
+                          }
+                        },
+                        { "pot_stack@farmersdelight_cooking_pot.pot_stack": {} }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            { "selected_icon@common.inventory_selected_icon_button": {} },
+            { "gamepad_cursor@common.gamepad_cursor_button": {} }
+          ]
+        }
+      },
+      { "flying_item_renderer@common.flying_item_renderer": { "layer": 21 } }
+    ]
+  },
+
+  // Pocket profile: same panel, book always in cover (exclusive) mode.
+  "pocket_panel@farmersdelight_cooking_pot.desktop_panel": {
+    "$fd_wide_layout": false
+  }
+}

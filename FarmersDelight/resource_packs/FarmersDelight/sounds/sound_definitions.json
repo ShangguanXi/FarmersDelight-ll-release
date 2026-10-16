@@ -1,0 +1,54 @@
+{
+    "format_version": "1.14.0",
+    "sound_definitions": {
+        "block.farmersdelight.cutting_board": {
+            "category": "block",
+            "sounds": [
+                 "sounds/block/cutting_board/knife1",
+                 "sounds/block/cutting_board/knife2"
+            ]
+        },
+        "block.farmersdelight.skillet.add_food": {
+            "category": "block",
+            "sounds": [
+                 "sounds/block/skillet/add_food1",
+                 "sounds/block/skillet/add_food2"
+            ]
+        },
+        "block.farmersdelight.skillet.sizzle": {
+            "category": "block",
+            "sounds": [
+                 "sounds/block/skillet/sizzle1",
+                 "sounds/block/skillet/sizzle2",
+                 "sounds/block/skillet/sizzle3"
+            ]
+        },
+        "item.farmersdelight.skillet.attack_strong": {
+            "category": "player",
+            "sounds": [
+                 "sounds/block/skillet/attack_strong"
+            ]
+        },
+        "item.farmersdelight.skillet.attack_weak": {
+            "category": "player",
+            "sounds": [
+                 "sounds/block/skillet/attack_weak"
+            ]
+        },
+        "block.farmersdelight.cooking_pot.boil_soup": {
+            "category": "block",
+            "sounds": [
+                 "sounds/block/cooking_pot/boil_soup1",
+                 "sounds/block/cooking_pot/boil_soup2",
+                 "sounds/block/cooking_pot/boil_soup3"
+            ]
+        },
+        "block.farmersdelight.cooking_pot.boil_water": {
+            "category": "block",
+            "sounds": [
+                 "sounds/block/cooking_pot/boil_water1",
+                 "sounds/block/cooking_pot/boil_water2"
+            ]
+        }
+    }
+}

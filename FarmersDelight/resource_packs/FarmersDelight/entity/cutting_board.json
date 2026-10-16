@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "farmersdelight:cutting_board",
+      "materials": {
+        "default": "zombie"
+      },
+      "textures": {
+        "default": "textures/items/rotten_tomato"
+      },
+      "geometry": {
+        "default": "geometry.cutting_board_item"
+      },
+      "animations": {
+        "cutting_board_block": "animation.cutting_board.block",
+        "cutting_board_controller": "controller.animation.cutting_board"
+      },
+      "scripts": {
+        "animate": [
+          "cutting_board_controller"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "enable_attachables": false
+    }
+  }
+}

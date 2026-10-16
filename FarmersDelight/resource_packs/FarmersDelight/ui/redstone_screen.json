@@ -1,0 +1,36 @@
+{
+  "namespace": "redstone",
+
+  //---------------------------------------------------------------------------
+  // Farmer's Delight cooking pot: targeted override of the vanilla dispenser
+  // screen. Same proven mechanism as the old addon's ui/chest_screen.json:
+  // re-declare the screen control (all vanilla properties are merged unchanged,
+  // nothing is dropped), and only APPEND two gated variable groups to the end
+  // of the vanilla "variables" array via modifications/insert_back. Later
+  // groups win, so a cooking-pot instance - where the native side injects the
+  // static screen variable $fd_cooking_pot = true - switches screen_content to
+  // the FD panels, while every normal dispenser/hopper/crafter/dropper keeps
+  // the exact vanilla path ($fd_cooking_pot defaults to false).
+  //---------------------------------------------------------------------------
+  "dispenser_screen@common.inventory_screen_common": {
+    "$fd_cooking_pot|default": false,
+    "modifications": [
+      {
+        "array_name": "variables",
+        "operation": "insert_back",
+        "value": {
+          "requires": "($desktop_screen and $fd_cooking_pot)",
+          "$screen_content": "farmersdelight_cooking_pot.desktop_panel"
+        }
+      },
+      {
+        "array_name": "variables",
+        "operation": "insert_back",
+        "value": {
+          "requires": "($pocket_screen and $fd_cooking_pot)",
+          "$screen_content": "farmersdelight_cooking_pot.pocket_panel"
+        }
+      }
+    ]
+  }
+}

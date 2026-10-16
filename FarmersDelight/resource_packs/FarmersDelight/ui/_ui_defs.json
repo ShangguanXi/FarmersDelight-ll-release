@@ -1,0 +1,8 @@
+{
+    "ui_defs": [
+      "ui/chest_screen.json",
+      "ui/cooking_pot.json",
+    "ui/farmersdelight_cooking_pot.json",
+    "ui/redstone_screen.json"
+  ]
+  }

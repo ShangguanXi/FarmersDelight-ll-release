@@ -1,0 +1,33 @@
+{
+    "format_version": 2,
+    "header": {
+        "description": "pack.description",
+        "name": "pack.name",
+        "uuid": "e3c91e01-288b-4371-88b5-4a786eb35d8f",
+        "version": [
+            5,
+            0,
+            3
+        ],
+        "min_engine_version": [
+            1,
+            26,
+            0
+        ]
+    },
+    "modules": [
+        {
+            "description": "农夫乐事",
+            "type": "resources",
+            "uuid": "968b2a14-291e-4932-bb45-8419440b6de8",
+            "version": [
+                5,
+                0,
+                3
+            ]
+        }
+    ],
+    "capabilities": [
+        "pbr"
+    ]
+}
