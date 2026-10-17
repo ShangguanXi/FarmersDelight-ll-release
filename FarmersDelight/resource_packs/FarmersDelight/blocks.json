@@ -66,6 +66,13 @@
         "textures": "sandy_shrub",
         "sound": "grass"
     },
+    "farmersdelight:cabbages": { "sound": "grass" },
+    "farmersdelight:onions": { "sound": "grass" },
+    "farmersdelight:budding_tomatoes": { "sound": "grass" },
+    "farmersdelight:tomatoes": { "sound": "grass" },
+    "farmersdelight:tomatoes_on_rope": { "sound": "grass" },
+    "farmersdelight:rice": { "sound": "grass" },
+    "farmersdelight:rice_panicles": { "sound": "grass" },
     "farmersdelight:half_tatami_mat": {
         "sound": "cloth"
     },

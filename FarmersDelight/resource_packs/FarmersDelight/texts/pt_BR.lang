@@ -307,6 +307,8 @@ farmersdelight:itemGroup.name.furniture=Farmer`s Delight - Móveis
 farmersdelight:itemGroup.name.animal_food=Farmer`s Delight - Ração Animal
 farmersdelight:itemGroup.name.cooker=Farmer`s Delight - Utensílios de Cozinha
 farmersdelight:itemGroup.name.miscItem=Farmer`s Delight - Itens Diversos
+farmersdelight:itemGroup.name.soil=Farmer`s Delight - Solos
+farmersdelight:itemGroup.name.canvasSign=Farmer`s Delight - Placa de lona
 
 tile.farmersdelight:pumpkin_pie.name=Torta de Abóbora
 item.farmersdelight:pumpkin_pie_slice.name=Fatia de torta de abóbora

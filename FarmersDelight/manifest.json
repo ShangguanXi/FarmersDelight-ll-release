@@ -1,7 +1,7 @@
 {
   "name": "FarmersDelight",
   "entry": "FarmersDelight.dll",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "native",
   "platform": "client",
   "description": "Farmer's Delight for Minecraft Bedrock, as a native LeviLamina mod"
